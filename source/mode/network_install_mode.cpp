@@ -134,9 +134,8 @@ namespace tin::ui
 
             // Do this now because otherwise we won't get an opportunity whilst waiting
             // in the loop
-            gfxFlushBuffers();
-            gfxSwapBuffers();
-
+            consoleUpdate(NULL);
+            
             while (true)
             {
                 // Break on input pressed
@@ -286,7 +285,6 @@ namespace tin::ui
         tin::network::WaitSendNetworkData(m_clientSocket, &ack, sizeof(u8));
         printf("\n Press (B) to return.");
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 }

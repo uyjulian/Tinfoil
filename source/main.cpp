@@ -19,7 +19,6 @@
 #include "mode/verify_nsp_mode.hpp"
 #include "ui/framework/view.hpp"
 #include "ui/framework/console_options_view.hpp"
-#include "ui/install_view.hpp"
 
 #include "debug.h"
 #include "error.hpp"
@@ -40,10 +39,6 @@ void userAppExit(void);
 // TODO: Create a proper logging setup, as well as a log viewing screen
 // TODO: Validate NCAs
 // TODO: Verify dumps, ncaids match sha256s, installation succeess, perform proper uninstallation on failure and prior to install
-
-u8* g_framebuf;
-u32 g_framebufWidth;
-u32 g_framebufHeight;
 
 bool g_shouldExit = false;
 
@@ -118,11 +113,8 @@ int main(int argc, char **argv)
         Result rc = 0;
         tin::ui::ViewManager& manager = tin::ui::ViewManager::Instance();
 
-        gfxInitDefault();
         manager.m_printConsole = consoleInit(NULL);
         LOG_DEBUG("NXLink is active\n");
-
-        g_framebuf = gfxGetFramebuffer(&g_framebufWidth, &g_framebufHeight);
 
         // Create the tinfoil directory and subdirs on the sd card if they don't already exist. 
         // These are used throughout the app without existance checks.
@@ -147,18 +139,12 @@ int main(int argc, char **argv)
         // TODO: Add install tik and cert, delete personalized ticket and view title keys
 
         auto mainView = std::make_unique<tin::ui::ConsoleOptionsView>();
-        auto showUITesting = [&]()
-        {
-            auto installView = std::make_unique<tin::ui::InstallView>();
-            manager.PushView(std::move(installView));
-        };
 
         mainView->AddEntry("Main Menu", tin::ui::ConsoleEntrySelectType::HEADING, nullptr);
         mainView->AddEntry("", tin::ui::ConsoleEntrySelectType::NONE, nullptr);
         mainView->AddEntry(titleManCat.m_name, tin::ui::ConsoleEntrySelectType::SELECT, std::bind(&tin::ui::Category::OnSelected, &titleManCat));
         mainView->AddEntry("Install Information", tin::ui::ConsoleEntrySelectType::SELECT_INACTIVE, nullptr);
         mainView->AddEntry("Ticket Management", tin::ui::ConsoleEntrySelectType::SELECT, std::bind(&tin::ui::Category::OnSelected, &tikManCat));
-        mainView->AddEntry("UI Testing", tin::ui::ConsoleEntrySelectType::SELECT, showUITesting);
         mainView->AddEntry("Exit", tin::ui::ConsoleEntrySelectType::SELECT, markForExit);
         
         manager.PushView(std::move(mainView));
@@ -171,12 +157,9 @@ int main(int argc, char **argv)
             if (kDown)
                 manager.ProcessInput(kDown);
 
-            g_framebuf = gfxGetFramebuffer(&g_framebufWidth, &g_framebufHeight);
-
             manager.Update();
 
-            gfxFlushBuffers();
-            gfxSwapBuffers();
+            consoleUpdate(NULL);
         }
     }
     catch (std::exception& e)
@@ -208,6 +191,6 @@ int main(int argc, char **argv)
         }
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }

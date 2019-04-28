@@ -32,11 +32,11 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET      := $(notdir $(CURDIR))
 BUILD       := build
-SOURCES     := source source/install source/ipc source/lib source/asset source/data source/ui source/ui/framework source/nx source/nx/ipc source/util source/mode
+SOURCES     := source source/install source/ipc source/lib source/asset source/data source/ui/framework source/nx source/nx/ipc source/util source/mode
 DATA        := data
 INCLUDES    := include
 EXEFS_SRC   := exefs_src
-ROMFS       := romfs
+ROMFS       := 
 APP_TITLE   := Tinfoil
 APP_AUTHOR  := Adubbz
 APP_VERSION := 0.2.1
@@ -58,14 +58,14 @@ ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES) $(CFLAGS)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ `freetype-config --cflags`
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
 CXXFLAGS	:= $(CFLAGS) -std=gnu++17 $(CXXFLAGS)
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= `freetype-config --libs` -lcurl -lz -lnx
+LIBS	:= -lcurl -lmbedx509 -lmbedtls -lmbedcrypto -lz -lnx
 
 
 
