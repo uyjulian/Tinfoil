@@ -20,7 +20,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "tinfs.h"
 
 void userAppInit(void);
 void userAppExit(void);
@@ -100,19 +99,10 @@ int main(int argc, char **argv)
 {
     try
     {
-        Result rc = 0;
         tin::ui::ViewManager& manager = tin::ui::ViewManager::Instance();
 
         manager.m_printConsole = consoleInit(NULL);
         LOG_DEBUG("NXLink is active\n");
-
-        // Create the tinfoil directory and subdirs on the sd card if they don't already exist. 
-        // These are used throughout the app without existance checks.
-        if (R_FAILED(rc = createTinfoilDirs()))
-        {
-            printf("main: Failed to create tinfoil dirs. Error code: 0x%08x\n", rc);
-            return 0;
-        }
         
         tin::ui::Category titleManCat("Title Management");
         titleManCat.AddMode(std::move(std::make_unique<tin::ui::USBInstallMode>()));

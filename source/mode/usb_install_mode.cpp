@@ -19,8 +19,6 @@ extern "C"
 #include "ui/framework/console_view.hpp"
 #include "ui/framework/console_checkbox_view.hpp"
 #include "util/usb_util.hpp"
-#include "nx/ipc/usb_comms_new.h"
-#include "nx/ipc/usb_new.h"
 #include "debug.h"
 #include "error.hpp"
 
