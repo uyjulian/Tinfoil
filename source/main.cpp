@@ -10,11 +10,7 @@
 #include "nx/ipc/tin_ipc.h"
 
 #include "mode/mode.hpp"
-#include "mode/install_extracted_mode.hpp"
-#include "mode/install_nsp_mode.hpp"
-#include "mode/network_install_mode.hpp"
 #include "mode/usb_install_mode.hpp"
-#include "mode/verify_nsp_mode.hpp"
 #include "ui/framework/view.hpp"
 #include "ui/framework/console_options_view.hpp"
 
@@ -119,11 +115,7 @@ int main(int argc, char **argv)
         }
         
         tin::ui::Category titleManCat("Title Management");
-        titleManCat.AddMode(std::move(std::make_unique<tin::ui::InstallNSPMode>()));
-        titleManCat.AddMode(std::move(std::make_unique<tin::ui::VerifyNSPMode>()));
-        titleManCat.AddMode(std::move(std::make_unique<tin::ui::InstallExtractedNSPMode>()));
         titleManCat.AddMode(std::move(std::make_unique<tin::ui::USBInstallMode>()));
-        titleManCat.AddMode(std::move(std::make_unique<tin::ui::NetworkInstallMode>()));
         // TODO: Add uninstall and dump nsp
 
         // TODO: Add install tik and cert, delete personalized ticket and view title keys
@@ -133,7 +125,6 @@ int main(int argc, char **argv)
         mainView->AddEntry("Main Menu", tin::ui::ConsoleEntrySelectType::HEADING, nullptr);
         mainView->AddEntry("", tin::ui::ConsoleEntrySelectType::NONE, nullptr);
         mainView->AddEntry(titleManCat.m_name, tin::ui::ConsoleEntrySelectType::SELECT, std::bind(&tin::ui::Category::OnSelected, &titleManCat));
-        mainView->AddEntry("Install Information", tin::ui::ConsoleEntrySelectType::SELECT_INACTIVE, nullptr);
         mainView->AddEntry("Exit", tin::ui::ConsoleEntrySelectType::SELECT, markForExit);
         
         manager.PushView(std::move(mainView));
