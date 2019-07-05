@@ -41,7 +41,5 @@ namespace tin::install
 
             virtual u64 GetTitleId();
             virtual nx::ncm::ContentMetaType GetContentMetaType();
-
-            virtual void DebugPrintInstallData();
     };
 }

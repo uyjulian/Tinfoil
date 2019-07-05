@@ -1,18 +1,25 @@
 #include <stdio.h>
+#include <switch.h>
+
+#include <exception>
+#include <sstream>
+#include <stdlib.h>
+#include <malloc.h>
+#include <threads.h>
+#include <unistd.h>
+#include <stdexcept>
+#include <memory>
+#include "data/byte_buffer.hpp"
+#include "install/install_nsp_remote.hpp"
+#include "install/usb_nsp.hpp"
+#include "util/usb_util.hpp"
+#include "debug.h"
+#include "error.hpp"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include <stdexcept>
-#include <memory>
-#include <switch.h>
-
 #include "nx/ipc/tin_ipc.h"
-
-#include "mode/mode.hpp"
-#include "mode/usb_install_mode.hpp"
-#include "ui/framework/view.hpp"
-#include "ui/framework/console_options_view.hpp"
 
 #include "debug.h"
 #include "error.hpp"
@@ -95,42 +102,91 @@ void markForExit(void)
     g_shouldExit = true;
 }
 
+struct TUSHeader
+{
+    u32 magic; // TUL0 (Tinfoil Usb List 0)
+    u32 nspListSize;
+    u64 padding;
+} PACKED;
+
 int main(int argc, char **argv)
 {
     try
     {
-        tin::ui::ViewManager& manager = tin::ui::ViewManager::Instance();
+        FsStorageId destStorageId = FsStorageId_SdCard;
+        bool ignoreReqFirmVersion = false;
+        Result rc = 0;
+        printf("Waiting for USB to be ready...\n");
 
-        manager.m_printConsole = consoleInit(NULL);
-        LOG_DEBUG("NXLink is active\n");
-        
-        tin::ui::Category titleManCat("Title Management");
-        titleManCat.AddMode(std::move(std::make_unique<tin::ui::USBInstallMode>()));
-        // TODO: Add uninstall and dump nsp
+        consoleUpdate(NULL);
 
-        // TODO: Add install tik and cert, delete personalized ticket and view title keys
-
-        auto mainView = std::make_unique<tin::ui::ConsoleOptionsView>();
-
-        mainView->AddEntry("Main Menu", tin::ui::ConsoleEntrySelectType::HEADING, nullptr);
-        mainView->AddEntry("", tin::ui::ConsoleEntrySelectType::NONE, nullptr);
-        mainView->AddEntry(titleManCat.m_name, tin::ui::ConsoleEntrySelectType::SELECT, std::bind(&tin::ui::Category::OnSelected, &titleManCat));
-        mainView->AddEntry("Exit", tin::ui::ConsoleEntrySelectType::SELECT, markForExit);
-        
-        manager.PushView(std::move(mainView));
-
-        while (appletMainLoop() && !g_shouldExit)
+        while (true)
         {
             hidScanInput();
-            u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+            
+            if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_B)
+                break;
 
-            if (kDown)
-                manager.ProcessInput(kDown);
+            rc = usbDsWaitReady(1000000);
 
-            manager.Update();
-
-            consoleUpdate(NULL);
+            if (R_SUCCEEDED(rc)) break;
+            else if ((rc & 0x3FFFFF) != 0xEA01)
+            {
+                // Timeouts are okay, we just want to allow users to escape at this point
+                THROW_FORMAT("Failed to wait for USB to be ready\n"); 
+            }   
         }
+
+        printf("USB is ready. Waiting for header...\n");
+
+        consoleUpdate(NULL);
+        
+        TUSHeader header;
+        tin::util::USBRead(&header, sizeof(TUSHeader));
+
+        if (header.magic != 0x304C5554)
+            THROW_FORMAT("Incorrect TUL header magic!\n");
+
+        LOG_DEBUG("Valid header magic.\n");
+        LOG_DEBUG("NSP List Size: %u\n", header.nspListSize);
+
+        auto nspListBuf = std::make_unique<char[]>(header.nspListSize+1);
+        std::vector<std::string> nspNames;
+        memset(nspListBuf.get(), 0, header.nspListSize+1);
+
+        tin::util::USBRead(nspListBuf.get(), header.nspListSize);
+
+        // Split the string up into individual nsp names
+        std::stringstream nspNameStream(nspListBuf.get());
+        std::string segment;
+        std::string nspExt = ".nsp";
+
+        nspNames.clear();
+
+        while (std::getline(nspNameStream, segment, '\n'))
+        {
+            if (segment.compare(segment.size() - nspExt.size(), nspExt.size(), nspExt) == 0)
+                nspNames.push_back(segment);
+        }
+
+        destStorageId = FsStorageId_SdCard;
+        // destStorageId = FsStorageId_NandUser;
+        ignoreReqFirmVersion = false;
+
+        for (auto& nspName : nspNames)
+        {
+            tin::install::nsp::USBNSP usbNSP(nspName);
+
+            printf("Installing from %s\n", nspName.c_str());
+            tin::install::nsp::RemoteNSPInstall install(destStorageId, ignoreReqFirmVersion, &usbNSP);
+
+            printf("Preparing install...\n");
+            install.Prepare();
+            install.Begin();
+            printf("\n");
+        }
+
+        tin::util::USBCmdManager::SendExitCmd();
     }
     catch (std::exception& e)
     {
