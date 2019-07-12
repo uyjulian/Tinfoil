@@ -111,6 +111,8 @@ struct TUSHeader
 
 int main(int argc, char **argv)
 {
+    consoleInit(NULL);
+
     try
     {
         FsStorageId destStorageId = FsStorageId_SdCard;
