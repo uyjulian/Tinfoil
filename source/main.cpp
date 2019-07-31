@@ -118,7 +118,10 @@ int main(int argc, char **argv)
         FsStorageId destStorageId = FsStorageId_SdCard;
         bool ignoreReqFirmVersion = false;
         Result rc = 0;
+        u32 state = 0;
         printf("Waiting for USB to be ready...\n");
+        printf("Press the HOME button to exit.\n");
+        printf("Press X to switch storage device.\n");
 
         consoleUpdate(NULL);
 
@@ -127,19 +130,30 @@ int main(int argc, char **argv)
             hidScanInput();
             
             if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_B)
-                break;
+                THROW_FORMAT("User interrupt\n"); 
 
-            rc = usbDsWaitReady(1000000);
-
-            if (R_SUCCEEDED(rc)) break;
-            else if ((rc & 0x3FFFFF) != 0xEA01)
+            if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_X)
             {
-                // Timeouts are okay, we just want to allow users to escape at this point
-                THROW_FORMAT("Failed to wait for USB to be ready\n"); 
-            }   
+                if (destStorageId == FsStorageId_SdCard)
+                {
+                    destStorageId = FsStorageId_NandUser;
+                    printf("System Memory selected.\n");
+                }
+                else
+                {
+                    destStorageId = FsStorageId_SdCard;
+                    printf("microSD Card selected.\n");
+                }
+                consoleUpdate(NULL);
+            }
+
+            rc = usbDsGetState(&state);
+
+            if (R_SUCCEEDED(rc) && state == 5) break;
         }
 
         printf("USB is ready. Waiting for header...\n");
+        printf("Press the HOME button to exit.\n");
 
         consoleUpdate(NULL);
         
@@ -171,8 +185,6 @@ int main(int argc, char **argv)
                 nspNames.push_back(segment);
         }
 
-        destStorageId = FsStorageId_SdCard;
-        // destStorageId = FsStorageId_NandUser;
         ignoreReqFirmVersion = false;
 
         for (auto& nspName : nspNames)
@@ -180,12 +192,15 @@ int main(int argc, char **argv)
             tin::install::nsp::USBNSP usbNSP(nspName);
 
             printf("Installing from %s\n", nspName.c_str());
+            consoleUpdate(NULL);
             tin::install::nsp::RemoteNSPInstall install(destStorageId, ignoreReqFirmVersion, &usbNSP);
 
             printf("Preparing install...\n");
+            consoleUpdate(NULL);
             install.Prepare();
             install.Begin();
             printf("\n");
+            consoleUpdate(NULL);
         }
 
         tin::util::USBCmdManager::SendExitCmd();
@@ -194,6 +209,7 @@ int main(int argc, char **argv)
     {
         consoleClear();
         printf("An error occurred:\n%s\n\nPress any button to exit.", e.what());
+        consoleUpdate(NULL);
         LOG_DEBUG("An error occurred:\n%s", e.what());
 
         u64 kDown = 0;
@@ -208,6 +224,7 @@ int main(int argc, char **argv)
     {
         consoleClear();
         printf("An unknown error occurred\n\nPress any button to exit.");
+        consoleUpdate(NULL);
         LOG_DEBUG("An unknown error occurred:\n");
 
         u64 kDown = 0;

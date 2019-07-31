@@ -51,9 +51,16 @@ namespace tin::util
         u8* tmpBuf = (u8*)out;
         size_t sizeRemaining = len;
         size_t tmpSizeRead = 0;
+        Result rc = 0;
+        u32 state = 0;
 
         while (sizeRemaining)
         {
+            rc = usbDsGetState(&state);
+
+            if (R_SUCCEEDED(rc) && state != 5)
+                THROW_FORMAT("USB disconnected\n"); 
+
             tmpSizeRead = usbCommsRead(tmpBuf, sizeRemaining);
             tmpBuf += tmpSizeRead;
             sizeRemaining -= tmpSizeRead;
@@ -67,9 +74,16 @@ namespace tin::util
     	const u8 *bufptr = (const u8 *)in;
         size_t cursize = len;
         size_t tmpsize = 0;
+        Result rc = 0;
+        u32 state = 0;
 
         while (cursize)
         {
+            rc = usbDsGetState(&state);
+
+            if (R_SUCCEEDED(rc) && state != 5)
+                THROW_FORMAT("USB disconnected\n"); 
+
             tmpsize = usbCommsWrite(bufptr, cursize);
             LOG_DEBUG("USB Bytes Written: \n");
             printBytes(nxlinkout, (u8*)bufptr, tmpsize, true);
