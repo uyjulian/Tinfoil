@@ -152,6 +152,8 @@ int main(int argc, char **argv)
             if (R_SUCCEEDED(rc) && state == 5) break;
         }
 
+        rc = usbDsWaitReady(1000000);
+
         printf("USB is ready. Waiting for header...\n");
         printf("Press the HOME button to exit.\n");
 
