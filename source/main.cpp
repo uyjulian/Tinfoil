@@ -119,6 +119,8 @@ int main(int argc, char **argv)
         bool ignoreReqFirmVersion = false;
         Result rc = 0;
         u32 state = 0;
+        printf("Welcome to Tinfoil.\n");
+        printf("Source code located at https://github.com/uyjulian/Tinfoil\n");
         printf("Waiting for USB to be ready...\n");
         printf("Press the HOME button to exit.\n");
         printf("Press X to switch storage device.\n");
