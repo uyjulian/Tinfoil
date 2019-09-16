@@ -8,7 +8,7 @@
 
 namespace tin::data
 {
-    static const size_t BUFFER_SEGMENT_DATA_SIZE = 0x800000; // Approximately 8MB
+    static const size_t BUFFER_SEGMENT_DATA_SIZE = 0x100000; // Approximately 8MB
 
     struct BufferSegment
     {
