@@ -39,7 +39,7 @@ EXEFS_SRC   := exefs_src
 ROMFS       := 
 APP_TITLE   := Tinfoil
 APP_AUTHOR  := Adubbz
-APP_VERSION := 0.2.1-thinfoil1
+APP_VERSION := 0.2.1-thinfoil2
 
 #---------------------------------------------------------------------------------
 # options for code generation
