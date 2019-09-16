@@ -122,6 +122,7 @@ int main(int argc, char **argv)
         printf("Waiting for USB to be ready...\n");
         printf("Press the HOME button to exit.\n");
         printf("Press X to switch storage device.\n");
+        printf("Press Y to toggle ignore required firmware version.\n");
 
         consoleUpdate(NULL);
 
@@ -147,6 +148,20 @@ int main(int argc, char **argv)
                 consoleUpdate(NULL);
             }
 
+            if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_Y)
+            {
+                ignoreReqFirmVersion = !ignoreReqFirmVersion;
+                if (ignoreReqFirmVersion)
+                {
+                    printf("Ignoring firmware version.\n");
+                }
+                else
+                {
+                    printf("Enforcing firmware version.\n");
+                }
+                consoleUpdate(NULL);
+            }
+
             rc = usbDsGetState(&state);
 
             if (R_SUCCEEDED(rc) && state == 5) break;
@@ -155,6 +170,7 @@ int main(int argc, char **argv)
         rc = usbDsWaitReady(1000000);
 
         printf("USB is ready. Waiting for header...\n");
+        printf("To change options, re-launch the program with the cable disconnected.\n");
         printf("Press the HOME button to exit.\n");
 
         consoleUpdate(NULL);
@@ -186,8 +202,6 @@ int main(int argc, char **argv)
             if (segment.compare(segment.size() - nspExt.size(), nspExt.size(), nspExt) == 0)
                 nspNames.push_back(segment);
         }
-
-        ignoreReqFirmVersion = false;
 
         for (auto& nspName : nspNames)
         {
