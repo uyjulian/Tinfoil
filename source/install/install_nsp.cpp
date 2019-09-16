@@ -23,8 +23,11 @@ namespace tin::install::nsp
 
     std::tuple<nx::ncm::ContentMeta, nx::ncm::ContentRecord> NSPInstallTask::ReadCNMT()
     {
-        std::tuple<std::string, nx::ncm::ContentRecord> cnmtNCAInfo = tin::util::GetCNMTNCAInfo(this->m_simpleFileSystem->m_absoluteRootPath.substr(0, this->m_simpleFileSystem->m_absoluteRootPath.size() - 1));
-        return { tin::util::GetContentMetaFromNCA(std::get<0>(cnmtNCAInfo)), std::get<1>(cnmtNCAInfo) };
+        nx::ncm::ContentRecord cnmtRecord = tin::util::CreateNSPCNMTContentRecord(this->m_simpleFileSystem->m_absoluteRootPath.substr(0, this->m_simpleFileSystem->m_absoluteRootPath.size() - 1));
+        nx::ncm::ContentStorage contentStorage(m_destStorageId);
+        this->InstallNCA(cnmtRecord.ncaId);
+        std::string cnmtNCAFullPath = contentStorage.GetPath(cnmtRecord.ncaId);
+        return { tin::util::GetContentMetaFromNCA(cnmtNCAFullPath), cnmtRecord };
     }
 
     void NSPInstallTask::InstallTicketCert()
